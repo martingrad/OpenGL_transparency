@@ -1,0 +1,3 @@
+[submodule "extern/OpenGL_Graphics_Engine"]
+	path = extern/OpenGL_Graphics_Engine
+	url = https://github.com/emmaforsling/OpenGL_Graphics_Engine.git
