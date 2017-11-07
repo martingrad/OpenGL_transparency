@@ -21,28 +21,18 @@ using namespace glm;
 bool initOpenGL(void);
 bool initScene(void);
 void initAntTweakBar(void);
-void updateTweakBar(void);
 
 // Controls
 void magicTwMouseButtonWrapper(GLFWwindow *, int, int, int);
 void magicTwMouseHoverWrapper(GLFWwindow *, double, double);
-void toggleDisplacement(void *clientData);
-void toggleShowTriangles(void *clientData);
-void toggleBezier(void *clientData);
+void myFunction(void *clientData);
+
+void updateTweakBar(void);
 
 // Variables
 GLFWwindow* window;
 Scene* scene;
 TwBar* tweakbar;
-
-Mesh* tessellatedMesh;
-
-// AntTweakBar variables
-float tessScale 		= 1.0;
-float dispScale 		= 1.0;
-int dispEnabled 		= 0.0;
-int trianglesEnabled 	= 0.0;
-int bezierEnabled		= 0.0;
 
 // Constants
 #define WIDTH 1024
@@ -109,7 +99,7 @@ bool initOpenGL(void)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( 1024, 768, "Dynamic Tessellation", NULL, NULL);
+	window = glfwCreateWindow( 1024, 768, "Projekt okänt", NULL, NULL);
 	if( window == NULL )
 	{
 		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
@@ -143,31 +133,37 @@ bool initScene(void)
 	int texWidth  = 1024;
 
 	// Create and add a mesh to the scene
-	tessellatedMesh = new Mesh();
-	// tessellatedMesh->initShaders("shaders/vertexshader.glsl", "shaders/fragmentshader.glsl");
-    tessellatedMesh->initShaders( 	"shaders/tessellation/vertexshader.glsl",
-                                 	"shaders/tessellation/tessellationcontrolshader.glsl",
-                                    "shaders/tessellation/tessellationevaluationshader.glsl",
-                                    "shaders/tessellation/geometryshader.glsl",
-                                    "shaders/tessellation/fragmentshader.glsl" );
-    
-	tessellatedMesh->initOBJ("extern/OpenGL_Graphics_Engine/assets/susanne.obj");
-	tessellatedMesh->setDispMap("assets/textures/dispMap.png", texHeight, texWidth);
-	tessellatedMesh->setNormMap("assets/textures/normMap.png", texHeight, texWidth);
-	tessellatedMesh->setColorMap("assets/textures/bunny_tex.png", texHeight, texWidth);
-	tessellatedMesh->setMaterialProperties(0.5, 0.5, 40.0);	// diffuse and specular coeff, specular power
-	tessellatedMesh->setPosition(0.0, 0.0, -10.0);
-	tessellatedMesh->scaleObject(5.0);
-	tessellatedMesh->addFloatUniform("tessScale", 1.0);
-	tessellatedMesh->addFloatUniform("dispScale", 1.0);
-	tessellatedMesh->addIntegerUniform("dispEnabled", dispEnabled);
-	tessellatedMesh->addIntegerUniform("trianglesEnabled", trianglesEnabled);
-	tessellatedMesh->addIntegerUniform("bezierEnabled", bezierEnabled);
-	scene->addMesh(tessellatedMesh);
+	Mesh* tempMesh1 = new Mesh();
+	tempMesh1->initShaders("extern/OpenGL_Graphics_Engine/shaders/vertexshader.glsl", "shaders/fragmentshader.glsl");
+	tempMesh1->initOBJ("assets/models/cube_bl_exp.obj");
+	tempMesh1->setColorMap("assets/textures/ao_cube_inv.png", texHeight, texWidth);
+	tempMesh1->setMaterialProperties(0.85, 0.15, 10.0);	// diffuse and specular coeff, specular power
+	tempMesh1->setPosition(-1.5, 0.0, 0.0);
+	tempMesh1->setTexture("assets/textures/ao_suzanne_inv.png", "aoMap", GL_TEXTURE4, 4, 512, 512);
+	scene->addMesh(tempMesh1);
+
+	// Create and add a mesh to the scene
+	Mesh* tempMesh2 = new Mesh();
+	tempMesh2->initShaders("extern/OpenGL_Graphics_Engine/shaders/vertexshader.glsl", "extern/OpenGL_Graphics_Engine/shaders/fragmentshader.glsl");
+	tempMesh2->initOBJ("extern/OpenGL_Graphics_Engine/assets/sphere.obj");
+	tempMesh2->setColorMap("extern/OpenGL_Graphics_Engine/assets/textures/bunny_tex.png",texHeight, texWidth);
+	tempMesh2->setMaterialProperties(0.50, 0.50, 40.0);	// diffuse and specular coeff, specular power
+	tempMesh2->setPosition(2.0, 0.0, 0.0);
+	scene->addMesh(tempMesh2);
+
+	// Mesh* cameraMesh = new Mesh();
+	// cameraMesh->initCube(0.25);
+	// cameraMesh->setTexture("assets/textures/bunny_tex.png");
+	// cameraMesh->setMaterialProperties(0.50, 0.50, 40.0);	// diffuse and specular coeff, specular power
+	// cameraMesh->setPosition(0.0, 0.0, 2.0);
+	// scene->addMesh(cameraMesh);
+
+	return true;
 }
 
 /****************************** <AntTweakBar> *********************************/
 
+float testVariable = 10.0f;
 /**
  *   Initialize the AntTweakBar window and add its variables
 **/
@@ -184,45 +180,31 @@ void initAntTweakBar(void)
     // TwWindowSize(WIDTH * 1.99, HEIGHT * 1.99);			// for mac retina 15
 
     // // Create a new tweak bar (by calling TWNewBar) and set its size
-    tweakbar = TwNewBar("Properties");
-    TwDefine("Properties size='400 700'");
+    tweakbar = TwNewBar("Emma");
+    TwDefine("Emma size='400 700'");
 
     /**
     * Add variables to the tweak bar
     **/
     TwAddVarRW( tweakbar,           		// my tweak bar
-            	"Tessellation",        // name of my variable
+            	"That's Me",          		// name of my variable
             	TW_TYPE_FLOAT,      		// tweak bar type
-            	&tessScale,       			// my variable
-           		"min=0.05 max=5 step=0.05 help=':D'" 
+            	&testVariable,       		// my variable
+           		"min=0 max=2 step=0.05 help=':D'" 
            		);
 
     TwAddVarRW( tweakbar,           		// my tweak bar
-            	"Displacement",        			// name of my variable
+            	"Martin",        			// name of my variable
             	TW_TYPE_FLOAT,      		// tweak bar type
-            	&dispScale,       			// my variable
-           		"min=0 max=5 step=0.05 help='displacement scale'"
+            	&testVariable,       		// my variable
+           		" group='Stockholm' label='Martin' min=0 max=2 step=0.05 help='man' "
            		);
 
-    TwAddButton( tweakbar,
-    			 "show/hide triangles",
-    			 &toggleShowTriangles,
-    			 NULL,
-    			 " group='Toggle' label='Toggle triangles' "
-    			 );
-
-    TwAddButton( tweakbar,
+    TwAddButton( tweakbar, 
     			 "comment1",
-    			 &toggleDisplacement,
+    			 &myFunction,
     			 NULL,
-    			 " group='Toggle' label='Toggle displacement' "
-    			 );
-
-    TwAddButton( tweakbar,
-    			 "bezier",
-    			 &toggleBezier,
-    			 NULL,
-    			 " group='Toggle' label='Toggle smoothing' "
+    			 " label='Life is like a box a chocolates' "
     			 ); 
 	
 	glfwSetMouseButtonCallback(window, magicTwMouseButtonWrapper);
@@ -230,22 +212,9 @@ void initAntTweakBar(void)
 
 }
 
-void toggleDisplacement(void *clientData)
+void myFunction(void *clientData)
 {
-	dispEnabled = !dispEnabled;
-	tessellatedMesh->updateIntegerUniform("dispEnabled", dispEnabled);
-}
-
-void toggleBezier(void *clientData)
-{
-	bezierEnabled = !bezierEnabled;
-	tessellatedMesh->updateIntegerUniform("bezierEnabled", bezierEnabled);
-}
-
-void toggleShowTriangles(void *clientData)
-{
-	trianglesEnabled = !trianglesEnabled;
-	tessellatedMesh->updateIntegerUniform("trianglesEnabled", trianglesEnabled);
+	std::cout << "Hej på mig igen " << std::endl;	
 }
 
 void magicTwMouseButtonWrapper(GLFWwindow* window, int button, int action, int mods)
@@ -260,8 +229,8 @@ void magicTwMouseHoverWrapper(GLFWwindow * window, double x, double y)
 
 void updateTweakBar(void)
 {
-	tessellatedMesh->updateFloatUniform("tessScale", tessScale);
-	tessellatedMesh->updateFloatUniform("dispScale", dispScale);
+	// Call the setFunctions for those uniform variables 
+	// that you want to be updated! 
 }
 
 /****************************** </AntTweakBar> *********************************/
