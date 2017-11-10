@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <math.h>
 
 // OpenGL includes
 #include <GL/glew.h>
@@ -28,11 +29,15 @@ void magicTwMouseHoverWrapper(GLFWwindow *, double, double);
 void myFunction(void *clientData);
 
 void updateTweakBar(void);
+void updateLightPosition();
 
 // Variables
 GLFWwindow* window;
 Scene* scene;
+Mesh* lightMesh;
 TwBar* tweakbar;
+glm::vec3 lightPosition = glm::vec3(0.0, 0.0, -1.0);
+int frame = 0;
 
 // Constants
 #define WIDTH 1024
@@ -61,6 +66,8 @@ int main(void)
 		
 		updateTweakBar();
 
+		updateLightPosition();
+
 		scene->render(window);
 
 		// Render the AntTweakBar (after the meshes)
@@ -69,6 +76,8 @@ int main(void)
 		// Swap buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		frame++;
 	} // Check if the ESC key was pressed or the window was closed
 	while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
 		   glfwWindowShouldClose(window) == 0 );
@@ -132,31 +141,25 @@ bool initScene(void)
 	int texHeight = 1024;
 	int texWidth  = 1024;
 
-	// Create and add a mesh to the scene
-	Mesh* tempMesh1 = new Mesh();
-	tempMesh1->initShaders("extern/OpenGL_Graphics_Engine/shaders/vertexshader.glsl", "shaders/fragmentshader.glsl");
-	tempMesh1->initOBJ("assets/models/cube_bl_exp.obj");
-	tempMesh1->setColorMap("assets/textures/ao_cube_inv.png", texHeight, texWidth);
-	tempMesh1->setMaterialProperties(0.85, 0.15, 10.0);	// diffuse and specular coeff, specular power
-	tempMesh1->setPosition(-1.5, 0.0, 0.0);
-	tempMesh1->setTexture("assets/textures/ao_suzanne_inv.png", "aoMap", GL_TEXTURE4, 4, 512, 512);
-	scene->addMesh(tempMesh1);
+	// Create and add deer mesh
+	Mesh* deerMesh = new Mesh();
+	deerMesh->initShaders("extern/OpenGL_Graphics_Engine/shaders/vertexshader.glsl", "shaders/fragmentshader.glsl");
+	deerMesh->initOBJ("assets/models/deer_bl_exp.obj");
+	deerMesh->setColorMap("assets/textures/white.png", texHeight, texWidth);
+	deerMesh->setMaterialProperties(0.9, 0.10, 5.0);	// diffuse and specular coeff, specular power
+	deerMesh->setPosition(0.5, -2.5, -2.0);
+	deerMesh->setTexture("assets/textures/ao_deer_inv.png", "aoMap", GL_TEXTURE4, 4, 512, 512);
+	deerMesh->addVec3Uniform("lightPos_ws", glm::value_ptr(lightPosition));
+	scene->addMesh(deerMesh);
 
-	// Create and add a mesh to the scene
-	Mesh* tempMesh2 = new Mesh();
-	tempMesh2->initShaders("extern/OpenGL_Graphics_Engine/shaders/vertexshader.glsl", "extern/OpenGL_Graphics_Engine/shaders/fragmentshader.glsl");
-	tempMesh2->initOBJ("extern/OpenGL_Graphics_Engine/assets/sphere.obj");
-	tempMesh2->setColorMap("extern/OpenGL_Graphics_Engine/assets/textures/bunny_tex.png",texHeight, texWidth);
-	tempMesh2->setMaterialProperties(0.50, 0.50, 40.0);	// diffuse and specular coeff, specular power
-	tempMesh2->setPosition(2.0, 0.0, 0.0);
-	scene->addMesh(tempMesh2);
-
-	// Mesh* cameraMesh = new Mesh();
-	// cameraMesh->initCube(0.25);
-	// cameraMesh->setTexture("assets/textures/bunny_tex.png");
-	// cameraMesh->setMaterialProperties(0.50, 0.50, 40.0);	// diffuse and specular coeff, specular power
-	// cameraMesh->setPosition(0.0, 0.0, 2.0);
-	// scene->addMesh(cameraMesh);
+	// Create and add sphere at light source position
+	lightMesh = new Mesh();
+	lightMesh->initShaders("shaders/lightSourceVertexShader.glsl", "shaders/lightSourceFragmentShader.glsl");
+	lightMesh->initOBJ("extern/OpenGL_Graphics_Engine/assets/sphere.obj");
+	lightMesh->setMaterialProperties(1.0, 0.0, 40.0);	// diffuse and specular coeff, specular power
+	lightMesh->setPosition(lightPosition.x, lightPosition.y, lightPosition.z);
+	lightMesh->scaleObject(0.05);
+	scene->addMesh(lightMesh); // TODO: Find out what's wrong with the position
 
 	return true;
 }
@@ -234,3 +237,11 @@ void updateTweakBar(void)
 }
 
 /****************************** </AntTweakBar> *********************************/
+
+void updateLightPosition(void)
+{
+	lightPosition.z = -1.0 + (4.0 * std::sin(0.01 * frame));
+	lightPosition.x = (3.0 * std::cos(0.01 * frame));
+	lightMesh->setPosition(lightPosition.x, lightPosition.y, lightPosition.z);
+	// std::cout << lightPosition.z << std::endl;
+}
