@@ -65,5 +65,5 @@ void main() {
 
 	// Composite lighting contributions
     fragmentColor = atten * k_diff * diffuseLighting * texture(colorMap, uv) + k_spec * specularLight * specularColor;
-    fragmentColor += lt * vec4(1.0, 0.5, 0.5, 1.0);
+    fragmentColor += lt * vec4(1.0, 0.65, 0.65, 1.0);
 }
